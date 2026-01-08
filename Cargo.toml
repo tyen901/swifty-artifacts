@@ -1,0 +1,62 @@
+[package]
+name = "swifty_artifacts"
+version = "0.2.1"
+edition = "2021"
+
+license = "Unlicense"
+description = "Byte-perfect Swifty repo/mod models and checksum helpers."
+repository = "https://github.com/tyen901/swifty_artifacts"
+readme = "README.md"
+keywords = ["swifty", "arma", "checksum", "md5", "srf", "pbo"]
+categories = ["encoding", "filesystem"]
+rust-version = "1.70"
+
+include = [
+  "src/**",
+  "tests/**",
+  "examples/**",
+  "README.md",
+  "spec.md",
+  "Cargo.toml",
+  "LICENSE*",
+]
+
+[lib]
+name = "swifty_artifacts"
+path = "src/lib.rs"
+
+[features]
+# Default feature set should be everything.
+default = ["fs", "pbo"]
+
+# On-disk scanning helpers (`scan_file`) and other filesystem-oriented utilities.
+fs = []
+
+# PBO parsing and Swifty PBO partitioning.
+pbo = []
+
+# CLI binary (kept off by default so library users don't pull clap/walkdir)
+cli = ["dep:clap", "dep:walkdir", "dep:anyhow", "dep:rayon", "dep:indicatif"]
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "1.0.69"
+hex = "0.4.3"
+md5 = "0.8.0"
+sha1 = "0.10.6"
+
+clap = { version = "4.5", features = ["derive"], optional = true }
+walkdir = { version = "2.5", optional = true }
+anyhow = { version = "1.0", optional = true }
+
+rayon = { version = "1.10", optional = true }
+indicatif = { version = "0.18.3", optional = true }
+
+[[bin]]
+name = "swifty-assemble"
+path = "src/bin/swifty-assemble.rs"
+required-features = ["cli"]
+
+[package.metadata.docs.rs]
+all-features = true
