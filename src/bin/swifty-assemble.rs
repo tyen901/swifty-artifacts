@@ -264,10 +264,12 @@ fn path_to_forward_slashes(p: &Path) -> Result<String> {
     Ok(s.replace('\\', "/"))
 }
 
+type BuildModListsOutput = (Vec<(String, SrfMod)>, Vec<RepoMod>, Vec<RepoMod>);
+
 fn build_mod_lists(
     scanned: Vec<(String, SrfMod)>,
     existing: Option<&RepoSpec>,
-) -> Result<(Vec<(String, SrfMod)>, Vec<RepoMod>, Vec<RepoMod>)> {
+) -> Result<BuildModListsOutput> {
     // Compute mod checksums and normalize mod ids to lowercase (Swifty common case).
     let mut mods: Vec<(String, SrfMod)> = Vec::with_capacity(scanned.len());
     let mut found: HashMap<String, (Md5Digest, usize)> = HashMap::new();
