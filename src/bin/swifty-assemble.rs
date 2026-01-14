@@ -22,7 +22,8 @@ use walkdir::WalkDir;
 
 use swifty_artifacts::{
     compute_mod_checksum, compute_repo_checksum_with_ticks, dotnet_ticks_from_system_time,
-    read_repo_json, scan_file, write_mod_srf, write_repo_json, Md5Digest, RepoMod, RepoSpec, SrfMod,
+    read_repo_json, scan_file, write_mod_srf, write_repo_json, Md5Digest, RepoMod, RepoSpec,
+    SrfMod,
 };
 
 const DEFAULT_REPO_VERSION: &str = "3.2.0.0";
@@ -142,7 +143,8 @@ fn scan_all_mods(repo_root: &Path) -> Result<Vec<(String, SrfMod)>> {
 
     // Discover top-level @mod folders first (deterministic order).
     let mut mod_dirs: Vec<(String, PathBuf)> = Vec::new();
-    for ent in fs::read_dir(repo_root).with_context(|| format!("read_dir {}", repo_root.display()))?
+    for ent in
+        fs::read_dir(repo_root).with_context(|| format!("read_dir {}", repo_root.display()))?
     {
         let ent = ent?;
         let path = ent.path();
@@ -179,7 +181,11 @@ fn scan_all_mods(repo_root: &Path) -> Result<Vec<(String, SrfMod)>> {
             }
 
             // Skip the artifact we generate (and any existing one)
-            if entry.file_name().to_string_lossy().eq_ignore_ascii_case("mod.srf") {
+            if entry
+                .file_name()
+                .to_string_lossy()
+                .eq_ignore_ascii_case("mod.srf")
+            {
                 continue;
             }
 
@@ -188,7 +194,11 @@ fn scan_all_mods(repo_root: &Path) -> Result<Vec<(String, SrfMod)>> {
                 .with_context(|| format!("metadata {}", fs_path.display()))?
                 .len();
             let rel = fs_path.strip_prefix(mod_dir).with_context(|| {
-                format!("strip_prefix {} from {}", mod_dir.display(), fs_path.display())
+                format!(
+                    "strip_prefix {} from {}",
+                    mod_dir.display(),
+                    fs_path.display()
+                )
             })?;
             let rel_str = path_to_forward_slashes(rel)?;
 
@@ -209,10 +219,7 @@ fn scan_all_mods(repo_root: &Path) -> Result<Vec<(String, SrfMod)>> {
         tasks.extend(mod_tasks);
     }
 
-    let scan_pb = progress_bar_bytes(
-        format!("Scanning ({} files)", tasks.len()),
-        total_bytes,
-    );
+    let scan_pb = progress_bar_bytes(format!("Scanning ({} files)", tasks.len()), total_bytes);
 
     // Scan in parallel; collect results in task order.
     let results: Vec<Result<_>> = tasks
@@ -270,8 +277,11 @@ fn build_mod_lists(
         m.name = mod_name.clone();
 
         // Keep output stable regardless of how the filesystem enumerates.
-        m.files
-            .sort_by(|a, b| a.path.to_ascii_lowercase().cmp(&b.path.to_ascii_lowercase()));
+        m.files.sort_by(|a, b| {
+            a.path
+                .to_ascii_lowercase()
+                .cmp(&b.path.to_ascii_lowercase())
+        });
 
         let checksum = compute_mod_checksum(&m.files)
             .with_context(|| format!("compute_mod_checksum for {}", m.name))?;
@@ -513,6 +523,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.exists() {
         fs::remove_file(path).with_context(|| format!("remove {}", path.display()))?;
     }
-    fs::rename(&tmp, path).with_context(|| format!("rename {} -> {}", tmp.display(), path.display()))?;
+    fs::rename(&tmp, path)
+        .with_context(|| format!("rename {} -> {}", tmp.display(), path.display()))?;
     Ok(())
 }
