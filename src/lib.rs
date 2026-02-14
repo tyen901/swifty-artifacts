@@ -34,4 +34,4 @@ pub use io::{
     apply_repo_images, read_mod_srf, read_repo_json, write_mod_srf, write_repo_json, IoError,
 };
 pub use model::{DigestError, Md5Digest, RepoMod, RepoSpec, SrfFile, SrfMod, SrfPart};
-pub use scan::scan_file;
+pub use scan::{scan_file, should_ignore_rel_path};

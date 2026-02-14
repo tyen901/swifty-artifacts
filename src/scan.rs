@@ -14,6 +14,16 @@ use std::path::Path;
 
 const IO_BUFFER_SIZE: usize = 128 * 1024;
 
+/// Returns true when a repo-relative path should be skipped by Swifty scanning workflows.
+///
+/// Currently this ignores macOS Finder metadata files (`.DS_Store`).
+pub fn should_ignore_rel_path(rel_path: &str) -> bool {
+    Path::new(rel_path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .is_some_and(|name| name == ".DS_Store")
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SignatureMode {
     Real,

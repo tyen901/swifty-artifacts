@@ -22,8 +22,8 @@ use walkdir::WalkDir;
 
 use swifty_artifacts::{
     compute_mod_checksum, compute_repo_checksum_with_ticks, dotnet_ticks_from_system_time,
-    read_repo_json, scan_file, write_mod_srf, write_repo_json, Md5Digest, RepoMod, RepoSpec,
-    SrfMod,
+    read_repo_json, scan_file, should_ignore_rel_path, write_mod_srf, write_repo_json, Md5Digest,
+    RepoMod, RepoSpec, SrfMod,
 };
 
 const DEFAULT_REPO_VERSION: &str = "3.2.0.0";
@@ -201,6 +201,9 @@ fn scan_all_mods(repo_root: &Path) -> Result<Vec<(String, SrfMod)>> {
                 )
             })?;
             let rel_str = path_to_forward_slashes(rel)?;
+            if should_ignore_rel_path(&rel_str) {
+                continue;
+            }
 
             mod_tasks.push(ScanTask {
                 mod_idx,
