@@ -1,4 +1,4 @@
-//! swifty-assemble
+//! swifty-artifacts
 //!
 //! Assembles Swifty-compatible artifacts for a repo folder:
 //! - Rewrites repo.json (preserving servers/auth/DLCs; updating mod hashes + repo checksum; rehashing icons)
@@ -29,7 +29,7 @@ use swifty_artifacts::{
 const DEFAULT_REPO_VERSION: &str = "3.2.0.0";
 
 #[derive(Parser, Debug)]
-#[command(name = "swifty-assemble")]
+#[command(name = "swifty-artifacts")]
 #[command(about = "Generate Swifty-compatible repo.json and mod.srf files for a repo folder.")]
 struct Args {
     /// Path to the repo root folder (contains repo.json and @mod folders)

@@ -54,8 +54,8 @@ rayon = { version = "1.10", optional = true }
 indicatif = { version = "0.18.3", optional = true }
 
 [[bin]]
-name = "swifty-assemble"
-path = "src/bin/swifty-assemble.rs"
+name = "swifty-artifacts"
+path = "src/bin/swifty-artifacts.rs"
 required-features = ["cli"]
 
 [package.metadata.docs.rs]

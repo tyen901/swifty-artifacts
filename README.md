@@ -29,23 +29,23 @@ fn example() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
 
 See `spec.md` for the full Swifty specification the crate follows.
 
-CLI: swifty-assemble
---------------------
+CLI: swifty-artifacts
+---------------------
 
-This crate includes an optional, feature-gated CLI binary `swifty-assemble` that
+This crate includes an optional, feature-gated CLI binary `swifty-artifacts` that
 scans a repository folder and regenerates `repo.json` and each `@mod`'s
 `mod.srf` files according to the crate's strict rules.
 
 Build the CLI (feature-gated):
 
 ```bash
-cargo run -F cli --bin swifty-assemble -- /path/to/repo-root
+cargo run -F cli --bin swifty-artifacts -- /path/to/repo-root
 ```
 
 Optional flags:
 
 ```bash
-cargo run -F cli --bin swifty-assemble -- /path/to/repo-root \
+cargo run -F cli --bin swifty-artifacts -- /path/to/repo-root \
     --name "my-repo" \
     --repo-version "3.2.0.0" \
     --client-parameters "-skipIntro" \
