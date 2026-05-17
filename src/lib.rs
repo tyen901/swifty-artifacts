@@ -19,6 +19,7 @@ pub mod io;
 pub mod model;
 pub mod pbo;
 pub mod scan;
+pub mod streaming;
 
 mod path;
 mod ticks;
@@ -35,3 +36,4 @@ pub use io::{
 };
 pub use model::{DigestError, Md5Digest, RepoMod, RepoSpec, SrfFile, SrfMod, SrfPart};
 pub use scan::{scan_file, should_ignore_rel_path};
+pub use streaming::SwiftyStreamingPartScanner;

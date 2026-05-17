@@ -38,6 +38,13 @@ struct PboMeta {
     entries: Vec<PboEntry>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SwiftyPboPartPlan {
+    pub path: String,
+    pub start: u64,
+    pub length: u64,
+}
+
 fn pbo_read_cstring<R: BufRead>(r: &mut R) -> io::Result<Vec<u8>> {
     let mut out = Vec::new();
     let mut b = [0u8; 1];
@@ -191,6 +198,37 @@ fn pbo_partition_named_from_meta(
     parts.push(("$$END$$".to_string(), offset, tail_len));
 
     Ok(parts)
+}
+
+pub fn swifty_pbo_part_plan_from_prefix(
+    file_path: &str,
+    prefix: &[u8],
+    file_len: u64,
+) -> Result<Option<Vec<SwiftyPboPartPlan>>, SwiftyError> {
+    ensure_ascii_path("pbo file path", file_path)?;
+    let mut reader = std::io::Cursor::new(prefix);
+    let meta = match pbo_read_meta(&mut reader) {
+        Ok(meta) => meta,
+        Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => return Ok(None),
+        Err(error) => {
+            return Err(SwiftyError::InvalidPbo {
+                file: file_path.to_string(),
+                reason: error.to_string(),
+            });
+        }
+    };
+    pbo_partition_named_from_meta(&meta, file_len, file_path).map(|parts| {
+        Some(
+            parts
+                .into_iter()
+                .map(|(path, start, length)| SwiftyPboPartPlan {
+                    path,
+                    start,
+                    length,
+                })
+                .collect(),
+        )
+    })
 }
 
 /// Compute SwiftyPboFile parts for a `.pbo`, including MD5 for each part.
