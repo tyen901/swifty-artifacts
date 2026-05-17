@@ -5,6 +5,7 @@ use crate::pbo::{swifty_pbo_part_plan_from_prefix, SwiftyPboPartPlan};
 const MAX_PBO_HEADER_PREFIX: usize = 1024 * 1024;
 
 pub struct SwiftyStreamingPartScanner {
+    file_path: String,
     file_len: u64,
     consumed: u64,
     mode: ScannerMode,
@@ -17,11 +18,22 @@ enum ScannerMode {
 }
 
 impl SwiftyStreamingPartScanner {
-    pub fn new(file_len: u64) -> Self {
+    pub fn new(file_path: &str, file_len: u64) -> Self {
+        let extension = std::path::Path::new(file_path)
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        let mode = if extension == "pbo" {
+            ScannerMode::Detect { prefix: Vec::new() }
+        } else {
+            ScannerMode::Raw(RawScanner::new(file_path))
+        };
         Self {
+            file_path: file_path.to_owned(),
             file_len,
             consumed: 0,
-            mode: ScannerMode::Detect { prefix: Vec::new() },
+            mode,
         }
     }
 
@@ -44,7 +56,7 @@ impl SwiftyStreamingPartScanner {
         match &mut self.mode {
             ScannerMode::Detect { prefix } => {
                 prefix.extend_from_slice(bytes);
-                match swifty_pbo_part_plan_from_prefix("stream.pbo", prefix, self.file_len) {
+                match swifty_pbo_part_plan_from_prefix(&self.file_path, prefix, self.file_len) {
                     Ok(Some(plan)) => {
                         let mut scanner = PlannedScanner::new(plan);
                         let out = scanner.push(prefix)?;
@@ -52,12 +64,17 @@ impl SwiftyStreamingPartScanner {
                         Ok(out)
                     }
                     Ok(None) if prefix.len() <= MAX_PBO_HEADER_PREFIX => Ok(Vec::new()),
-                    Ok(None) | Err(_) => {
-                        let mut scanner = RawScanner::new();
+                    Ok(None) => Err(SwiftyError::InvalidPbo {
+                        file: self.file_path.clone(),
+                        reason: "PBO header exceeded streaming prefix limit".to_string(),
+                    }),
+                    Err(SwiftyError::InvalidPbo { .. }) => {
+                        let mut scanner = RawScanner::new(&self.file_path);
                         let out = scanner.push(prefix);
                         self.mode = ScannerMode::Raw(scanner);
                         Ok(out)
                     }
+                    Err(error) => Err(error),
                 }
             }
             ScannerMode::Raw(scanner) => Ok(scanner.push(bytes)),
@@ -74,8 +91,18 @@ impl SwiftyStreamingPartScanner {
         }
         match &mut self.mode {
             ScannerMode::Detect { prefix } => {
-                let mut scanner = RawScanner::new();
-                Ok(scanner.finish(prefix))
+                match swifty_pbo_part_plan_from_prefix(&self.file_path, prefix, self.file_len)? {
+                    Some(plan) => {
+                        let mut scanner = PlannedScanner::new(plan);
+                        let mut out = scanner.push(prefix)?;
+                        out.extend(scanner.finish()?);
+                        Ok(out)
+                    }
+                    None => {
+                        let mut scanner = RawScanner::new(&self.file_path);
+                        Ok(scanner.finish(prefix))
+                    }
+                }
             }
             ScannerMode::Raw(scanner) => Ok(scanner.finish(&[])),
             ScannerMode::Planned(scanner) => scanner.finish(),
@@ -84,13 +111,20 @@ impl SwiftyStreamingPartScanner {
 }
 
 struct RawScanner {
+    file_name: String,
     offset: u64,
     pending: Vec<u8>,
 }
 
 impl RawScanner {
-    fn new() -> Self {
+    fn new(file_path: &str) -> Self {
+        let file_name = std::path::Path::new(file_path)
+            .file_name()
+            .and_then(|value| value.to_str())
+            .unwrap_or("file")
+            .to_owned();
         Self {
+            file_name,
             offset: 0,
             pending: Vec::with_capacity(RAW_PART_SIZE as usize),
         }
@@ -126,7 +160,7 @@ impl RawScanner {
         let digest = Md5Digest::from_bytes(md5::compute(&self.pending).0);
         self.pending.clear();
         SrfPart {
-            path: raw_part_name("stream", end),
+            path: raw_part_name(&self.file_name, end),
             start,
             length,
             checksum: digest,
