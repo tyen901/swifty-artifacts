@@ -20,8 +20,11 @@ fn cli_generates_artifacts_and_ignores_git_dirs() {
     fs::write(mod_dir.join("meta.cpp"), b"name = demo;").expect("write meta.cpp");
     fs::write(repo_root.join("icon.png"), b"icon-bytes").expect("write icon.png");
     fs::write(repo_root.join("repo.png"), b"repo-bytes").expect("write repo.png");
-    fs::write(repo_root.join(".git").join("HEAD"), b"ref: refs/heads/main\n")
-        .expect("write root git head");
+    fs::write(
+        repo_root.join(".git").join("HEAD"),
+        b"ref: refs/heads/main\n",
+    )
+    .expect("write root git head");
     fs::write(mod_git_dir.join("HEAD"), b"ref: refs/heads/main\n").expect("write mod git head");
 
     let binary = built_binary_path();
@@ -40,13 +43,20 @@ fn cli_generates_artifacts_and_ignores_git_dirs() {
 
     let repo_bytes = fs::read(repo_root.join("repo.json")).expect("read repo.json");
     let repo = read_repo_json(&repo_bytes).expect("parse repo.json");
-    assert_eq!(repo.repo_name, repo_root.file_name().unwrap().to_string_lossy());
+    assert_eq!(
+        repo.repo_name,
+        repo_root.file_name().unwrap().to_string_lossy()
+    );
     assert_eq!(repo.required_mods.len(), 1);
     assert_eq!(repo.required_mods[0].mod_name, "@demo");
 
     let mod_srf_bytes = fs::read(mod_dir.join("mod.srf")).expect("read mod.srf");
     let mod_srf = read_mod_srf(&mod_srf_bytes).expect("parse mod.srf");
-    let paths: Vec<&str> = mod_srf.files.iter().map(|file| file.path.as_str()).collect();
+    let paths: Vec<&str> = mod_srf
+        .files
+        .iter()
+        .map(|file| file.path.as_str())
+        .collect();
 
     assert!(paths.contains(&"addons\\sample.txt"));
     assert!(paths.contains(&"meta.cpp"));
