@@ -108,6 +108,10 @@ impl SwiftyStreamingPartScanner {
             ScannerMode::Planned(scanner) => scanner.finish(),
         }
     }
+
+    pub fn total_bytes(&self) -> u64 {
+        self.consumed
+    }
 }
 
 struct RawScanner {
