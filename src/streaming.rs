@@ -2,7 +2,7 @@ use crate::checksum::{raw_part_name, SwiftyError, RAW_PART_SIZE};
 use crate::model::{Md5Digest, SrfPart};
 use crate::pbo::{swifty_pbo_part_plan_from_prefix, SwiftyPboPartPlan};
 
-const MAX_PBO_HEADER_PREFIX: usize = 1024 * 1024;
+const MAX_PBO_HEADER_PREFIX: usize = 64 * 1024 * 1024;
 
 pub struct SwiftyStreamingPartScanner {
     file_path: String,
