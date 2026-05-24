@@ -39,6 +39,12 @@ pub enum SwiftyError {
     #[error("file checksum does not match swifty derived checksum for: {0}")]
     FileChecksumMismatch(String),
 
+    #[error("part checksum does not match swifty MD5 digest")]
+    PartChecksumMismatch,
+
+    #[error("part stream length mismatch: expected {expected}, got {actual}")]
+    InvalidPartLength { expected: u64, actual: u64 },
+
     #[error("io: {0}")]
     Io(#[from] io::Error),
 }

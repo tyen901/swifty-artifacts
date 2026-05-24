@@ -1,6 +1,8 @@
 use std::io::Write;
 
-use swifty_artifacts::{scan_file, SwiftyStreamingPartScanner};
+use swifty_artifacts::{
+    scan_file, Md5Digest, SwiftyStreamingPartScanner, SwiftyStreamingPartValidator,
+};
 
 #[test]
 fn streaming_raw_matches_scan_file() {
@@ -39,6 +41,27 @@ fn non_pbo_with_pbo_like_bytes_uses_raw_semantics() {
     let scanned = scan_file(&path, "not-pbo.bin").unwrap();
     assert_eq!(scanned.parts.len(), 1);
     let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn streaming_part_validator_accepts_matching_md5() {
+    let expected = Md5Digest::from_bytes(md5::compute(b"abcdef").0);
+    let mut validator = SwiftyStreamingPartValidator::new(expected, 6);
+
+    validator.push(b"abc").unwrap();
+    validator.push(b"def").unwrap();
+
+    assert_eq!(validator.finish().unwrap(), 6);
+}
+
+#[test]
+fn streaming_part_validator_rejects_digest_mismatch() {
+    let expected = Md5Digest::from_bytes(md5::compute(b"abcdef").0);
+    let mut validator = SwiftyStreamingPartValidator::new(expected, 6);
+
+    validator.push(b"abcdeg").unwrap();
+
+    assert!(validator.finish().is_err());
 }
 
 fn assert_stream_matches_scan_file(path: &std::path::Path, rel_path: &str) {

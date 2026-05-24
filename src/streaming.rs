@@ -11,6 +11,55 @@ pub struct SwiftyStreamingPartScanner {
     mode: ScannerMode,
 }
 
+pub struct SwiftyStreamingPartValidator {
+    expected: Md5Digest,
+    expected_len: u64,
+    seen: u64,
+    ctx: md5::Context,
+}
+
+impl SwiftyStreamingPartValidator {
+    pub fn new(expected: Md5Digest, expected_len: u64) -> Self {
+        Self {
+            expected,
+            expected_len,
+            seen: 0,
+            ctx: md5::Context::new(),
+        }
+    }
+
+    pub fn push(&mut self, bytes: &[u8]) -> Result<(), SwiftyError> {
+        self.seen = self.seen.checked_add(bytes.len() as u64).ok_or_else(|| {
+            SwiftyError::InvalidPartLength {
+                expected: self.expected_len,
+                actual: u64::MAX,
+            }
+        })?;
+        if self.seen > self.expected_len {
+            return Err(SwiftyError::InvalidPartLength {
+                expected: self.expected_len,
+                actual: self.seen,
+            });
+        }
+        self.ctx.consume(bytes);
+        Ok(())
+    }
+
+    pub fn finish(self) -> Result<u64, SwiftyError> {
+        if self.seen != self.expected_len {
+            return Err(SwiftyError::InvalidPartLength {
+                expected: self.expected_len,
+                actual: self.seen,
+            });
+        }
+        let digest = self.ctx.finalize();
+        if Md5Digest::from_bytes(digest.0) != self.expected {
+            return Err(SwiftyError::PartChecksumMismatch);
+        }
+        Ok(self.seen)
+    }
+}
+
 enum ScannerMode {
     Detect { prefix: Vec<u8> },
     Raw(RawScanner),

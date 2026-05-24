@@ -36,4 +36,4 @@ pub use io::{
 };
 pub use model::{DigestError, Md5Digest, RepoMod, RepoSpec, SrfFile, SrfMod, SrfPart};
 pub use scan::{scan_file, should_ignore_rel_path};
-pub use streaming::SwiftyStreamingPartScanner;
+pub use streaming::{SwiftyStreamingPartScanner, SwiftyStreamingPartValidator};
