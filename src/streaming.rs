@@ -29,7 +29,7 @@ impl SwiftyStreamingPartValidator {
     }
 
     pub fn push(&mut self, bytes: &[u8]) -> Result<(), SwiftyError> {
-        self.seen = self.seen.checked_add(bytes.len() as u64).ok_or_else(|| {
+        self.seen = self.seen.checked_add(bytes.len() as u64).ok_or({
             SwiftyError::InvalidPartLength {
                 expected: self.expected_len,
                 actual: u64::MAX,
